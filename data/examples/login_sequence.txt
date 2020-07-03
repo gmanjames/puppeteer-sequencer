@@ -1,0 +1,4 @@
+form#login
+    input[name="username"]:type:username
+    input[name="password"]:type:password
+.welcomeLoginButton:click
