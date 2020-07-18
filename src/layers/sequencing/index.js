@@ -1,7 +1,4 @@
 const fs = require('fs');
-const path = require('path');
-
-const DATA_DIR = process.env['DATA_DIR'];
 
 const readSequenceFile = (path) => {
     return new Promise(
@@ -26,7 +23,7 @@ const parseSequenceData = (sequenceData) => {
     let hierarchy = [];
 
     return sequenceData.split('\n').map((instruction) => {
-        let [source, sourceMethod = null, args = null] = instruction.split(':');
+        let [source, sourceMethod, args] = instruction.split(':');
 
         const TABSTOP = 4;
         const currentDepth = source.match(/[^\s]/).index / TABSTOP;
@@ -39,31 +36,15 @@ const parseSequenceData = (sequenceData) => {
             hierarchy.pop();
         }
 
-        return [hierarchy.slice(0, currentDepth).concat(source).join('$'), sourceMethod, args];
+        return [hierarchy.slice(0, currentDepth).concat(source).join(' '), sourceMethod, args];
     })
 }
 
-module.exports = (document) => {
+const noOp = (source) => console.log('no-op', source);
 
-    const cache = {
-        'root': document
-    }
+const getParsedSequence = (fileName) => readSequenceFile(fileName).then((sequenceData) => parseSequenceData(sequenceData));
 
-    return {
-        run: (fileName) => {
-            readSequenceFile(`${DATA_DIR}/${fileName}`)
-                .then((sequenceData) => parseSequenceData(sequenceData))
-                .then((sequence) => {
-                    sequence.map((line) => {
-                        let [source, action, args] = line;
-                        cache[source] = cache[source]
-                                     || cache[source.substr(0, source.lastIndexOf('$')) || 'root']
-                                            .then(elem => elem.$(source.split('$').pop()));
-            
-                        return () => cache[source].then((elem) => action ? elem[action](args) : console.log(`no-op for ${elem.name}`));
-                    })
-                    .reduce((prev, next) => () => prev().then(next))()
-                })
-        }
-    }
+module.exports = {
+    getParsedSequence,
+    noOp
 }

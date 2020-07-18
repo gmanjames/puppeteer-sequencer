@@ -1,5 +1,8 @@
-const sequencer = require('../src/layers/sequencing/index');
+const puppeteerSequencer = require('../');
+const path = require('path');
+const dataDirPath = path.resolve(__dirname, '../data', 'examples');
 
+//const puppeteer = require('puppeteer');
 // Stand-in for puppeteer API
 const element = ({name}) => {
     const click = () => Promise.resolve(console.log(`${name} -- click`));
@@ -14,8 +17,10 @@ const element = ({name}) => {
 };
 
 (async () => {
-    const runner = sequencer(Promise.resolve(element({name: 'html'})))
-    runner.run('login_sequence.txt');
-    runner.run('list_sequence.txt');
+    const {sequence, actions} = puppeteerSequencer;
+    const loginSequence = sequence(actions(`${dataDirPath}/login_sequence.txt`))
+    loginSequence(element({name: 'html'})).then(() => {
+        console.log('sequence completed')
+    })
 })()
 
